@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Kelola Barang</title>
@@ -191,14 +192,17 @@ button:hover {
             <input type="text" id="editNamaBarang" />
             <label>Kategori Game:</label>
             <input type="text" id="editKategoriGame" disabled />
-            <label>Harga Asli:</label>
-            <input type="number" id="editHargaAsli" />
-            <label>Harga Diskon:</label>
-            <input type="number" id="editHargaDiskon" />
+           <label>Harga Asli:</label>
+<input type="text" id="editHargaAsli" oninput="formatRupiah(this)" />
+<label>Harga Diskon:</label>
+<input type="text" id="editHargaDiskon" oninput="formatRupiah(this)" />
+
             <button onclick="saveItem()">Simpan</button>
         </div>
     </div>
     <input type="hidden" id="editCollectionName" />
+
+
 
 <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
@@ -274,34 +278,48 @@ function showEditModal(itemId, namaBarang, kategoriGame, hargaAsli, hargaDiskon)
     modal.style.display = "block"; // Tampilkan modal
 }
 
-// Fungsi untuk menyimpan item yang diedit
 function saveItem() {
     const itemId = document.getElementById('editItemId').value;
-    const collectionName = document.getElementById('editCollectionName').value; // Get the collection name from hidden input
+    const collectionName = document.getElementById('editCollectionName').value;
+
+    // Ambil nilai harga asli dan diskon tanpa menghapus titik
+    const hargaAsli = document.getElementById('editHargaAsli').value;
+    const hargaDiskon = document.getElementById('editHargaDiskon').value;
+
     const updatedData = {
         namaBarang: document.getElementById('editNamaBarang').value,
-        hargaAsli: parseInt(document.getElementById('editHargaAsli').value),
-        hargaDiskon: parseInt(document.getElementById('editHargaDiskon').value),
+        hargaAsli: hargaAsli, // Simpan harga asli dengan format titik
+        hargaDiskon: hargaDiskon, // Simpan harga diskon dengan format titik
     };
 
-    // Update the document in the correct collection
+    // Update dokumen di koleksi yang benar
     db.collection(collectionName).doc(itemId).update(updatedData)
-        .then(() => {
-            alert("Barang berhasil diperbarui!");
-            closeModal();
-            fetchItems(); // Refresh item list
-        })
-        .catch((error) => {
-            console.error("Error updating item: ", error);
+    .then(() => {
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil!',
+            text: 'Barang berhasil diperbarui!',
+            showConfirmButton: false,
+            timer: 1500
         });
+        closeModal(); // Tutup modal setelah berhasil
+        fetchItems(); // Refresh daftar barang
+    })
+    .catch((error) => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Terjadi kesalahan saat memperbarui barang.',
+        });
+        console.error("Error updating item: ", error);
+    });
 }
 
-
-        // Fungsi untuk menutup modal
-        function closeModal() {
-            const modal = document.getElementById("editModal");
-            modal.style.display = "none"; // Sembunyikan modal
-        }
+// Fungsi untuk menutup modal
+function closeModal() {
+    const modal = document.getElementById("editModal");
+    modal.style.display = "none"; // Sembunyikan modal
+}
 
         // Fungsi untuk menghapus item
         function deleteItem(collectionName, itemId) {
@@ -321,6 +339,16 @@ function saveItem() {
         window.onload = function() {
             fetchItems();
         };
+        
+        function formatRupiah(input) {
+    let value = input.value.replace(/\./g, ''); // Hilangkan titik yang ada sebelumnya
+    if (!isNaN(value)) {
+        input.value = parseInt(value).toLocaleString('id-ID'); // Format ke rupiah dengan titik
+    } else {
+        input.value = ''; // Reset input jika yang dimasukkan bukan angka
+    }
+}
+
     </script>
 </body>
 </html>

@@ -107,11 +107,12 @@ input:focus, select:focus {
       <option value="FreeFire">Free Fire</option>
     </select><br><br>
 
-    <label for="hargaAsli">Harga Asli:</label><br>
-    <input type="number" id="hargaAsli" name="hargaAsli" required><br><br>
+   <label for="hargaAsli">Harga Asli:</label><br>
+<input type="text" id="hargaAsli" name="hargaAsli" required oninput="formatCurrency(this)"><br><br>
 
-    <label for="hargaDiskon">Harga Diskon:</label><br>
-    <input type="number" id="hargaDiskon" name="hargaDiskon" required><br><br>
+<label for="hargaDiskon">Harga Diskon:</label><br>
+<input type="text" id="hargaDiskon" name="hargaDiskon" required oninput="formatCurrency(this)"><br><br>
+
 
     <button type="submit">Kirim</button>
   </form>
