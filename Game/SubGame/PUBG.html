@@ -737,7 +737,7 @@ const firebaseConfig = {
     // Ambil metode pembayaran yang dipilih
     paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
 
-    if (!uid || !serverId || !selectedProduct || !phoneNumber || !paymentMethod) {
+    if (!uid || !selectedProduct || !phoneNumber || !paymentMethod) {
   Swal.fire({
     icon: 'warning',
     title: 'Form Tidak Lengkap',
