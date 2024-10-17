@@ -680,14 +680,23 @@ const productContainer = document.getElementById('productContainer');
 let selectedProduct = null;
 
 db.collection('MobileLegends').get().then((querySnapshot) => {
+  const products = []; // Array untuk menyimpan produk
+
   querySnapshot.forEach((doc) => {
     const data = doc.data();
+    products.push(data); // Masukkan data produk ke array
+  });
+
+  // Urutkan produk berdasarkan hargaDiskon
+  products.sort((a, b) => a.hargaDiskon - b.hargaDiskon);
+
+  // Tampilkan produk yang sudah diurutkan
+  products.forEach((data) => {
     const productDiv = document.createElement('div');
     productDiv.classList.add('product');
     productDiv.innerHTML = `
       <h3>${data.namaBarang}</h3>
       <p class="harga-asli">Rp${data.hargaAsli}</p>
-      
       <p class="harga-diskon">Rp${data.hargaDiskon}</p>
     `;
     productDiv.addEventListener('click', () => {
@@ -701,6 +710,7 @@ db.collection('MobileLegends').get().then((querySnapshot) => {
 }).catch((error) => {
   console.error("Error mendapatkan produk: ", error);
 });
+
 
 // Logika pesanan
 const placeOrderBtn = document.getElementById('placeOrderBtn');

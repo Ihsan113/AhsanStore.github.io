@@ -665,7 +665,7 @@ button:hover {
   <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
 <script>
- // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyA9qR6fQwVhhvOOZobTnhkmanwnyM_eN6A",
   authDomain: "ahsanstore-afd75.firebaseapp.com",
@@ -675,179 +675,180 @@ const firebaseConfig = {
   appId: "1:628733570435:web:054af025d091f89490dab6",
   measurementId: "G-N35XLD1BMK"
 };
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
 
-  // Menampilkan produk Mobile Legends dari Firebase
-  const productContainer = document.getElementById('productContainer');
-  let selectedProduct = null;
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-  db.collection('FreeFire').get().then((querySnapshot) => {
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      const productDiv = document.createElement('div');
-      productDiv.classList.add('product');
-      productDiv.innerHTML = `
-        <h3>${data.namaBarang}</h3>
-        <p class="harga-asli">Rp${data.hargaAsli}</p>
-        <p class="harga-diskon">Rp${data.hargaDiskon}</p>
-      `;
-      productDiv.addEventListener('click', () => {
-        // Deselect previous product
-        document.querySelectorAll('.product').forEach(p => p.classList.remove('selected'));
-        productDiv.classList.add('selected');
-        selectedProduct = data;
-      });
-      productContainer.appendChild(productDiv);
+// Menampilkan produk Mobile Legends dari Firebase
+const productContainer = document.getElementById('productContainer');
+let selectedProduct = null;
+
+// Mengambil produk dari koleksi 'FreeFire' dan mengurutkan berdasarkan harga diskon
+db.collection('FreeFire').orderBy('hargaDiskon').get().then((querySnapshot) => {
+  querySnapshot.forEach((doc) => {
+    const data = doc.data();
+    const productDiv = document.createElement('div');
+    productDiv.classList.add('product');
+    productDiv.innerHTML = `
+      <h3>${data.namaBarang}</h3>
+      <p class="harga-asli">Rp${data.hargaAsli}</p>
+      <p class="harga-diskon">Rp${data.hargaDiskon}</p>
+    `;
+    productDiv.addEventListener('click', () => {
+      // Deselect previous product
+      document.querySelectorAll('.product').forEach(p => p.classList.remove('selected'));
+      productDiv.classList.add('selected');
+      selectedProduct = data;
     });
-  }).catch((error) => {
-    console.error("Error mendapatkan produk: ", error);
+    productContainer.appendChild(productDiv);
   });
+}).catch((error) => {
+  console.error("Error mendapatkan produk: ", error);
+});
 
-  // Logika pesanan
-  const placeOrderBtn = document.getElementById('placeOrderBtn');
-  const orderModal = document.getElementById('orderModal');
-  const orderDetails = document.getElementById('orderDetails');
-  const confirmOrderBtn = document.getElementById('confirmOrderBtn');
+// Logika pesanan
+const placeOrderBtn = document.getElementById('placeOrderBtn');
+const orderModal = document.getElementById('orderModal');
+const orderDetails = document.getElementById('orderDetails');
+const confirmOrderBtn = document.getElementById('confirmOrderBtn');
 
-  let paymentMethod; // Deklarasi variabel di luar untuk akses global
+let paymentMethod; // Deklarasi variabel di luar untuk akses global
 
-  placeOrderBtn.addEventListener('click', () => {
-    const uid = document.getElementById('uid').value; // Ambil nilai UID
-    const phoneNumber = document.getElementById('phoneNumber').value; // Ambil nilai nomor telepon
+placeOrderBtn.addEventListener('click', () => {
+  const uid = document.getElementById('uid').value; // Ambil nilai UID
+  const phoneNumber = document.getElementById('phoneNumber').value; // Ambil nilai nomor telepon
 
-    // Ambil metode pembayaran yang dipilih
-    paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+  // Ambil metode pembayaran yang dipilih
+  paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
 
-    if (!uid || !serverId || !selectedProduct || !phoneNumber || !paymentMethod) {
-  Swal.fire({
-    icon: 'warning',
-    title: 'Form Tidak Lengkap',
-    text: 'UID, Server ID, produk, nomor telepon, dan metode pembayaran harus diisi dengan benar sebelum melanjutkan.',
-    confirmButtonText: 'OK',
-    background: '#1e1e1e',
-    color: '#ffffff',
-    confirmButtonColor: '#00e676',
-  });
-  return;
+  if (!uid || !selectedProduct || !phoneNumber || !paymentMethod) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Form Tidak Lengkap',
+      text: 'UID, Server ID, produk, nomor telepon, dan metode pembayaran harus diisi dengan benar sebelum melanjutkan.',
+      confirmButtonText: 'OK',
+      background: '#1e1e1e',
+      color: '#ffffff',
+      confirmButtonColor: '#00e676',
+    });
+    return;
+  }
+
+  // Tampilkan modal dengan detail pesanan
+  orderDetails.innerHTML = `
+    <p><strong>ID:</strong> ${uid}</p>
+    <p><strong>Produk:</strong> ${selectedProduct.namaBarang} - Rp${selectedProduct.hargaDiskon}</p>
+    <p><strong>Metode Pembayaran:</strong> ${paymentMethod}</p>
+    <p><strong>Nomor Telepon:</strong> ${phoneNumber}</p>
+    <p><strong>Nama Game:</strong> Free Fire</p>
+  `;
+
+  orderModal.classList.add('show');
+});
+
+// Menutup modal dengan seret ke bawah
+let startY = 0;
+orderModal.addEventListener('touchstart', (e) => {
+  startY = e.touches[0].clientY;
+});
+
+orderModal.addEventListener('touchmove', (e) => {
+  const currentY = e.touches[0].clientY;
+  const distanceY = currentY - startY;
+
+  if (distanceY > 50) {
+    orderModal.classList.remove('show');
+  }
+});
+
+// Konfirmasi pesanan
+confirmOrderBtn.addEventListener('click', () => {
+  const uid = document.getElementById('uid').value; // Ambil nilai dari input UID
+  const combinedId = uid; // Menggunakan UID sebagai combinedId
+
+  const orderData = {
+    combinedId, // Menggunakan field baru yang berisi UID
+    productName: selectedProduct.namaBarang,
+    productPrice: selectedProduct.hargaDiskon,
+    paymentMethod, // Menggunakan variabel yang dideklarasikan sebelumnya
+    phoneNumber: document.getElementById('phoneNumber').value, // Ambil nilai dari input nomor telepon
+    gameName: "Free Fire", // Send game name to Firebase
+    timestamp: new Date()
+  };
+
+  // Tampilkan animasi pemesanan
+  showLoadingAnimation();
+
+  db.collection('Orders').add(orderData)
+    .then((docRef) => {
+      const orderId = docRef.id; // Get the newly created order ID
+      hideLoadingAnimation(); // Hide loading animation
+      alert('Pesanan berhasil dibuat!');
+      window.location.href = `orderan.html?orderId=${orderId}`; // Redirect with order ID
+    })
+    .catch((error) => {
+      hideLoadingAnimation(); // Sembunyikan animasi jika terjadi error
+      console.error("Error membuat pesanan: ", error);
+      alert('Terjadi kesalahan saat membuat pesanan.');
+    });
+});
+
+// Fungsi untuk menampilkan animasi loading
+function showLoadingAnimation() {
+  const loadingAnimation = document.createElement('div');
+  loadingAnimation.id = 'loadingAnimation';
+  loadingAnimation.innerHTML = '<p>Proses pemesanan, harap tunggu...</p>'; // Ganti dengan animasi yang diinginkan
+  loadingAnimation.style.position = 'fixed';
+  loadingAnimation.style.top = '50%';
+  loadingAnimation.style.left = '50%';
+  loadingAnimation.style.transform = 'translate(-50%, -50%)';
+  loadingAnimation.style.zIndex = '1000';
+  loadingAnimation.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+  loadingAnimation.style.padding = '20px';
+  loadingAnimation.style.borderRadius = '8px';
+  loadingAnimation.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
+  document.body.appendChild(loadingAnimation);
 }
 
-
-    // Tampilkan modal dengan detail pesanan
-    orderDetails.innerHTML = `
-      <p><strong>ID:</strong> ${uid}</p>
-      <p><strong>Produk:</strong> ${selectedProduct.namaBarang} - Rp${selectedProduct.hargaDiskon}</p>
-      <p><strong>Metode Pembayaran:</strong> ${paymentMethod}</p>
-      <p><strong>Nomor Telepon:</strong> ${phoneNumber}</p>
-      <p><strong>Nama Game:</strong>Free Fire</p>
-      
-    `;
-
-    orderModal.classList.add('show');
-  });
-
-  // Menutup modal dengan seret ke bawah
-  let startY = 0;
-  orderModal.addEventListener('touchstart', (e) => {
-    startY = e.touches[0].clientY;
-  });
-
-  orderModal.addEventListener('touchmove', (e) => {
-    const currentY = e.touches[0].clientY;
-    const distanceY = currentY - startY;
-
-    if (distanceY > 50) {
-      orderModal.classList.remove('show');
-    }
-  });
-
-  // Konfirmasi pesanan
-  confirmOrderBtn.addEventListener('click', () => {
-    const uid = document.getElementById('uid').value; // Ambil nilai dari input UID
-    const combinedId = uid; // Menggunakan UID sebagai combinedId
-
-    const orderData = {
-      combinedId, // Menggunakan field baru yang berisi UID
-      productName: selectedProduct.namaBarang,
-      productPrice: selectedProduct.hargaDiskon,
-      paymentMethod, // Menggunakan variabel yang dideklarasikan sebelumnya
-      phoneNumber: document.getElementById('phoneNumber').value, // Ambil nilai dari input nomor telepon
-      gameName: "Free Fire", // Send game name to Firebase
-      timestamp: new Date()
-    };
-
-    // Tampilkan animasi pemesanan
-    showLoadingAnimation();
-
-    db.collection('Orders').add(orderData)
-      .then((docRef) => {
-        const orderId = docRef.id; // Get the newly created order ID
-        hideLoadingAnimation(); // Hide loading animation
-        alert('Pesanan berhasil dibuat!');
-        window.location.href = `orderan.html?orderId=${orderId}`; // Redirect with order ID
-      })
-      .catch((error) => {
-        hideLoadingAnimation(); // Sembunyikan animasi jika terjadi error
-        console.error("Error membuat pesanan: ", error);
-        alert('Terjadi kesalahan saat membuat pesanan.');
-      });
-  });
-
-  // Fungsi untuk menampilkan animasi loading
-  function showLoadingAnimation() {
-    const loadingAnimation = document.createElement('div');
-    loadingAnimation.id = 'loadingAnimation';
-    loadingAnimation.innerHTML = '<p>Proses pemesanan, harap tunggu...</p>'; // Ganti dengan animasi yang diinginkan
-    loadingAnimation.style.position = 'fixed';
-    loadingAnimation.style.top = '50%';
-    loadingAnimation.style.left = '50%';
-    loadingAnimation.style.transform = 'translate(-50%, -50%)';
-    loadingAnimation.style.zIndex = '1000';
-    loadingAnimation.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
-    loadingAnimation.style.padding = '20px';
-    loadingAnimation.style.borderRadius = '8px';
-    loadingAnimation.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
-    document.body.appendChild(loadingAnimation);
+// Fungsi untuk menyembunyikan animasi loading
+function hideLoadingAnimation() {
+  const loadingAnimation = document.getElementById('loadingAnimation');
+  if (loadingAnimation) {
+    loadingAnimation.remove();
   }
+}
 
-  // Fungsi untuk menyembunyikan animasi loading
-  function hideLoadingAnimation() {
-    const loadingAnimation = document.getElementById('loadingAnimation');
-    if (loadingAnimation) {
-      loadingAnimation.remove();
-    }
-  }
+// Cek username
+document.getElementById('checkForm').addEventListener('submit', function(event) {
+  event.preventDefault();
 
-  // Cek username
-  document.getElementById('checkForm').addEventListener('submit', function(event) {
-            event.preventDefault();
+  const uid = document.getElementById('uid').value;
+  const apiKey = '6d4cdbbb4b70110a8feaa0bf07c0e8c16f86e2bdfbfcbc14b7'; // API Key dari Velixs.com
+  const apiUrl = `https://api.velixs.com/idgames-checker?apikey=${apiKey}&game=freefire&id=${uid}`;
 
-            const uid = document.getElementById('uid').value;
-            const apiKey = '6d4cdbbb4b70110a8feaa0bf07c0e8c16f86e2bdfbfcbc14b7'; // API Key dari Velixs.com
-            const apiUrl = `https://api.velixs.com/idgames-checker?apikey=${apiKey}&game=freefire&id=${uid}`;
+  // Tampilkan spinner
+  document.getElementById('spinner').style.display = 'block';
+  document.getElementById('result').innerHTML = ''; // Bersihkan hasil sebelumnya
 
-            // Tampilkan spinner
-            document.getElementById('spinner').style.display = 'block';
-            document.getElementById('result').innerHTML = ''; // Bersihkan hasil sebelumnya
+  // Mulai pengecekan
+  fetch(apiUrl)
+    .then(response => response.json())
+    .then(data => {
+      // Sembunyikan spinner setelah pengecekan selesai
+      document.getElementById('spinner').style.display = 'none';
 
-            // Mulai pengecekan
-            fetch(apiUrl)
-                .then(response => response.json())
-                .then(data => {
-                    // Sembunyikan spinner setelah pengecekan selesai
-                    document.getElementById('spinner').style.display = 'none';
+      if (data.status === true) {
+        document.getElementById('result').innerHTML = `<p>Nama Game: ${data.data.username}</p>`;
+      } else {
+        document.getElementById('result').innerHTML = `<p>Error: ${data.message}</p>`;
+      }
+    })
+    .catch(error => {
+      document.getElementById('spinner').style.display = 'none'; // Sembunyikan spinner jika ada error
+      document.getElementById('result').innerHTML = `<p>Terjadi kesalahan: ${error.message}</p>`;
+    });
+});
 
-                    if (data.status === true) {
-                        document.getElementById('result').innerHTML = `<p>Nama Game: ${data.data.username}</p>`;
-                    } else {
-                        document.getElementById('result').innerHTML = `<p>Error: ${data.message}</p>`;
-                    }
-                })
-                .catch(error => {
-                    document.getElementById('spinner').style.display = 'none'; // Sembunyikan spinner jika ada error
-                    document.getElementById('result').innerHTML = `<p>Terjadi kesalahan: ${error.message}</p>`;
-                });
-        });
 </script>
 
 </body>

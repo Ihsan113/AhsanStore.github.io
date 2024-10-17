@@ -670,26 +670,37 @@ const firebaseConfig = {
   let selectedProduct = null;
 
   db.collection('PUBG').get().then((querySnapshot) => {
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      const productDiv = document.createElement('div');
-      productDiv.classList.add('product');
-      productDiv.innerHTML = `
-        <h3>${data.namaBarang}</h3>
-        <p class="harga-asli">Rp${data.hargaAsli}</p>
-        <p class="harga-diskon">Rp${data.hargaDiskon}</p>
-      `;
-      productDiv.addEventListener('click', () => {
-        // Deselect previous product
-        document.querySelectorAll('.product').forEach(p => p.classList.remove('selected'));
-        productDiv.classList.add('selected');
-        selectedProduct = data;
-      });
-      productContainer.appendChild(productDiv);
-    });
-  }).catch((error) => {
-    console.error("Error mendapatkan produk: ", error);
+  const products = []; // Array untuk menyimpan produk
+
+  querySnapshot.forEach((doc) => {
+    const data = doc.data();
+    products.push(data); // Masukkan data produk ke array
   });
+
+  // Urutkan produk berdasarkan hargaDiskon
+  products.sort((a, b) => a.hargaDiskon - b.hargaDiskon);
+
+  // Tampilkan produk yang sudah diurutkan
+  products.forEach((data) => {
+    const productDiv = document.createElement('div');
+    productDiv.classList.add('product');
+    productDiv.innerHTML = `
+      <h3>${data.namaBarang}</h3>
+      <p class="harga-asli">Rp${data.hargaAsli}</p>
+      <p class="harga-diskon">Rp${data.hargaDiskon}</p>
+    `;
+    productDiv.addEventListener('click', () => {
+      // Deselect previous product
+      document.querySelectorAll('.product').forEach(p => p.classList.remove('selected'));
+      productDiv.classList.add('selected');
+      selectedProduct = data;
+    });
+    productContainer.appendChild(productDiv);
+  });
+}).catch((error) => {
+  console.error("Error mendapatkan produk: ", error);
+});
+
 
   // Logika pesanan
   const placeOrderBtn = document.getElementById('placeOrderBtn');
