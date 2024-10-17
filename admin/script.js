@@ -22,16 +22,22 @@ inputForm.addEventListener('submit', async (e) => {
   // Ambil data dari form
   const namaBarang = document.getElementById('namaBarang').value;
   const kategoriGame = document.getElementById('kategoriGame').value;
-  const hargaAsli = document.getElementById('hargaAsli').value;
-  const hargaDiskon = document.getElementById('hargaDiskon').value;
+
+  // Mengambil harga dan menghapus pemisah ribuan sebelum mengkonversi
+  const hargaAsli = document.getElementById('hargaAsli').value.replace(/\./g, ''); // Menghapus pemisah ribuan
+  const hargaDiskon = document.getElementById('hargaDiskon').value.replace(/\./g, ''); // Menghapus pemisah ribuan
+
+  // Format harga menjadi string dengan pemisah ribuan
+  const formattedHargaAsli = Number(hargaAsli).toLocaleString('id-ID');
+  const formattedHargaDiskon = Number(hargaDiskon).toLocaleString('id-ID');
 
   if (kategoriGame) {
     try {
       // Kirim data ke Firestore di koleksi sesuai kategori game
       await db.collection(kategoriGame).add({
         namaBarang: namaBarang,
-        hargaAsli: parseFloat(hargaAsli),
-        hargaDiskon: parseFloat(hargaDiskon),
+        hargaAsli: formattedHargaAsli, // Simpan sebagai string dengan pemisah ribuan
+        hargaDiskon: formattedHargaDiskon, // Simpan sebagai string dengan pemisah ribuan
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
       });
 
@@ -45,3 +51,15 @@ inputForm.addEventListener('submit', async (e) => {
     alert('Pilih kategori game!');
   }
 });
+
+// Fungsi untuk memformat harga
+function formatCurrency(input) {
+    // Menghapus semua karakter non-numerik
+    let value = input.value.replace(/\D/g, '');
+
+    // Memformat nilai sebagai mata uang (dengan pemisah ribuan)
+    value = Number(value).toLocaleString('id-ID');
+
+    // Mengatur nilai yang diformat kembali ke input
+    input.value = value;
+}
