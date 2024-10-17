@@ -198,7 +198,8 @@ button:hover {
             <button onclick="saveItem()">Simpan</button>
         </div>
     </div>
-    
+    <input type="hidden" id="editCollectionName" />
+
 <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
     
@@ -260,37 +261,41 @@ const firebaseConfig = {
             });
         }
 
-        // Fungsi untuk menampilkan modal edit
-        function showEditModal(itemId, namaBarang, kategoriGame, hargaAsli, hargaDiskon) {
-            document.getElementById('editItemId').value = itemId;
-            document.getElementById('editNamaBarang').value = namaBarang;
-            document.getElementById('editKategoriGame').value = kategoriGame; // Kategori game tidak bisa diedit
-            document.getElementById('editHargaAsli').value = hargaAsli;
-            document.getElementById('editHargaDiskon').value = hargaDiskon;
+       // Fungsi untuk menampilkan modal edit
+function showEditModal(itemId, namaBarang, kategoriGame, hargaAsli, hargaDiskon) {
+    document.getElementById('editItemId').value = itemId;
+    document.getElementById('editNamaBarang').value = namaBarang;
+    document.getElementById('editKategoriGame').value = kategoriGame; // Kategori game tidak bisa diedit
+    document.getElementById('editHargaAsli').value = hargaAsli;
+    document.getElementById('editHargaDiskon').value = hargaDiskon;
+    document.getElementById('editCollectionName').value = kategoriGame; // Set the collection name
 
-            const modal = document.getElementById("editModal");
-            modal.style.display = "block"; // Tampilkan modal
-        }
+    const modal = document.getElementById("editModal");
+    modal.style.display = "block"; // Tampilkan modal
+}
 
-        // Fungsi untuk menyimpan item yang diedit
-        function saveItem() {
-            const itemId = document.getElementById('editItemId').value;
-            const updatedData = {
-                namaBarang: document.getElementById('editNamaBarang').value,
-                hargaAsli: parseInt(document.getElementById('editHargaAsli').value),
-                hargaDiskon: parseInt(document.getElementById('editHargaDiskon').value),
-            };
+// Fungsi untuk menyimpan item yang diedit
+function saveItem() {
+    const itemId = document.getElementById('editItemId').value;
+    const collectionName = document.getElementById('editCollectionName').value; // Get the collection name from hidden input
+    const updatedData = {
+        namaBarang: document.getElementById('editNamaBarang').value,
+        hargaAsli: parseInt(document.getElementById('editHargaAsli').value),
+        hargaDiskon: parseInt(document.getElementById('editHargaDiskon').value),
+    };
 
-            db.collection("FreeFire").doc(itemId).update(updatedData) // Ganti dengan collection yang sesuai
-                .then(() => {
-                    alert("Barang berhasil diperbarui!");
-                    closeModal();
-                    fetchItems(); // Refresh item list
-                })
-                .catch((error) => {
-                    console.error("Error updating item: ", error);
-                });
-        }
+    // Update the document in the correct collection
+    db.collection(collectionName).doc(itemId).update(updatedData)
+        .then(() => {
+            alert("Barang berhasil diperbarui!");
+            closeModal();
+            fetchItems(); // Refresh item list
+        })
+        .catch((error) => {
+            console.error("Error updating item: ", error);
+        });
+}
+
 
         // Fungsi untuk menutup modal
         function closeModal() {
