@@ -696,32 +696,45 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Menampilkan produk Mobile Legends dari Firebase
 const productContainer = document.getElementById('productContainer');
 let selectedProduct = null;
 
-// Mengambil produk dari koleksi 'FreeFire' dan mengurutkan berdasarkan harga diskon
-db.collection('FreeFire').orderBy('hargaDiskon').get().then((querySnapshot) => {
-  querySnapshot.forEach((doc) => {
-    const data = doc.data();
-    const productDiv = document.createElement('div');
-    productDiv.classList.add('product');
-    productDiv.innerHTML = `
-      <h3>${data.namaBarang}</h3>
-      <p class="harga-asli">Rp${data.hargaAsli}</p>
-      <p class="harga-diskon">Rp${data.hargaDiskon}</p>
-    `;
-    productDiv.addEventListener('click', () => {
-      // Deselect previous product
-      document.querySelectorAll('.product').forEach(p => p.classList.remove('selected'));
-      productDiv.classList.add('selected');
-      selectedProduct = data;
+db.collection('FreeFire')
+  .get()
+  .then((querySnapshot) => {
+    const products = [];
+
+    // Mengumpulkan data produk
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      products.push(data);
     });
-    productContainer.appendChild(productDiv);
+
+    // Mengurutkan produk berdasarkan harga diskon (harus pastikan hargaDiskon adalah angka)
+    products.sort((a, b) => parseInt(a.hargaDiskon.replace(/\D/g, '')) - parseInt(b.hargaDiskon.replace(/\D/g, '')));
+
+    // Menampilkan produk yang sudah diurutkan
+    products.forEach((data) => {
+      const productDiv = document.createElement('div');
+      productDiv.classList.add('product');
+      productDiv.innerHTML = `
+        <h3>${data.namaBarang}</h3>
+        <p class="harga-asli">Rp${data.hargaAsli}</p>
+        <p class="harga-diskon">Rp${data.hargaDiskon}</p>
+      `;
+      productDiv.addEventListener('click', () => {
+        // Deselect previous product
+        document.querySelectorAll('.product').forEach(p => p.classList.remove('selected'));
+        productDiv.classList.add('selected');
+        selectedProduct = data;
+      });
+      productContainer.appendChild(productDiv);
+    });
+  })
+  .catch((error) => {
+    console.error("Error mendapatkan produk: ", error);
   });
-}).catch((error) => {
-  console.error("Error mendapatkan produk: ", error);
-});
+
 
 // Logika pesanan
 const placeOrderBtn = document.getElementById('placeOrderBtn');
