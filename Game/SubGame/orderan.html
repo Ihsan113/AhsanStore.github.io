@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Konfirmasi Pesanan</title>
@@ -161,6 +163,10 @@
     to { opacity: 0; }
 }
 
+
+/* Tombol close */ .close { position: absolute; top: 10px; right: 15px; font-size: 24px; color: #ffffff; cursor: pointer; } .close:hover { color: #ff5e5e; /* Ubah warna saat hover */ }
+
+/* Styling input file */ .file-input { margin: 20px 0; /* Jarak vertikal */ padding: 10px; /* Padding untuk input */ border: 2px solid #00e676; /* Border hijau */ border-radius: 8px; /* Sudut lebih bulat */ background-color: #232323; /* Latar belakang input */ color: #ffffff; /* Warna teks */ transition: border-color 0.3s ease; /* Animasi border saat fokus */ } .file-input:focus { outline: none; /* Menghilangkan outline default */ border-color: #ff5e5e; /* Ubah border saat fokus */ }
     </style>
 </head>
 <body>
@@ -188,15 +194,17 @@
         </div>
     </div>
 
-    <!-- Modal for uploading payment proof -->
-    <div id="paymentModal" class="modal">
-        <div class="modal-content">
-            <h2>Kirim Bukti Pembayaran</h2>
-            <input type="file" id="paymentProof" accept="image/*">
-            <br>
-            <button id="sendProofBtn">Kirim</button>
-        </div>
+   <!-- Modal for uploading payment proof -->
+<div id="paymentModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeModal">&times;</span> <!-- Tombol Close -->
+        <h2>Kirim Bukti Pembayaran</h2>
+       <div class="file-input-container"> <i class="fas fa-upload"></i> <!-- Ikon Upload --> <input type="file" id="paymentProof" accept="image/*" class="file-input"> </div>
+        <br>
+        <button id="sendProofBtn" class="btn">Kirim</button>
     </div>
+</div>
+
 
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-storage.js"></script>
@@ -402,6 +410,13 @@ function showConfirmationModal() {
         }
     });
 }
+
+
+// Event listener untuk refresh halaman
+document.getElementById('closeModal').addEventListener('click', function() {
+    location.reload(); // Refresh halaman
+});
+
 
     </script>
 </body>
