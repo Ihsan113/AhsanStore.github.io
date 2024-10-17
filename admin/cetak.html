@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cetak Struk Orderan - AhsanStore</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #1e1e1e;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #ffcc00;
+            margin-bottom: 20px;
+        }
+
+        .form-container {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ffcc00;
+            width: 300px;
+            background-color: #333;
+            color: #fff;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        button {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: none;
+            background-color: #4CAF50;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            outline: none;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #canvasContainer {
+            margin-top: 20px;
+        }
+
+        canvas {
+            background-color: #fff;
+            display: none;
+            border: 1px solid #ffcc00;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cetak Struk Orderan - AhsanStore</h1>
+
+    <div class="form-container">
+        <input type="text" id="orderId" placeholder="Masukkan Order ID...">
+        <button onclick="generateReceipt()">Cetak Struk</button>
+    </div>
+
+    <div id="canvasContainer">
+        <canvas id="receiptCanvas" width="400" height="600"></canvas>
+        <br>
+        <button id="downloadButton" style="display:none;" onclick="downloadReceipt()">Unduh Struk</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDHZ11E5Mq0NlqFuN09xzFJhMgfqMhU-Aw",
+            authDomain: "konter-e465d.firebaseapp.com",
+            projectId: "konter-e465d",
+            storageBucket: "konter-e465d.appspot.com",
+            messagingSenderId: "1033277565037",
+            appId: "1:1033277565037:web:8e4f9560b1e70a13c57764",
+            measurementId: "G-VYPRYTSB81"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function generateReceipt() {
+            const orderId = document.getElementById('orderId').value.trim();
+            const canvas = document.getElementById('receiptCanvas');
+            const ctx = canvas.getContext('2d');
+
+            if (orderId === "") {
+                alert("Masukkan Order ID.");
+                return;
+            }
+
+            db.collection('Orders').doc(orderId).get().then((doc) => {
+                if (doc.exists) {
+                    const orderData = doc.data();
+
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    // Header Struk
+                    ctx.fillStyle = "#ffcc00";
+                    ctx.font = "28px Roboto";
+                    ctx.textAlign = "center";
+                    ctx.fillText("AhsanStore", canvas.width / 2, 40);
+
+                    ctx.font = "18px Roboto";
+                    ctx.fillText("Orderan Berhasil", canvas.width / 2, 70);
+
+                    // Garis Pembatas
+                    ctx.strokeStyle = "#ffcc00";
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(20, 90);
+                    ctx.lineTo(canvas.width - 20, 90);
+                    ctx.stroke();
+
+                    // Data Pesanan
+                    ctx.font = "16px Roboto";
+                    ctx.fillStyle = "#000";
+                    ctx.textAlign = "left";                    
+                    ctx.fillText(`Order ID: ${orderData.combinedId}`, 30, 120);                    
+                    ctx.fillText(`Produk: ${orderData.productName}`, 30, 150);
+                    ctx.fillText(`Nama Game: ${orderData.gameName || 'N/A'}`, 30, 180);
+                    ctx.fillText(`Metode Pembayaran: ${orderData.paymentMethod}`, 30, 210);
+                    ctx.fillText(`Nomor Telepon: ${orderData.phoneNumber}`, 30, 240);
+                    ctx.fillText(`Status: ${orderData.status}`, 30, 270);
+                    ctx.fillText(`Tanggal Pesanan: ${new Date(orderData.timestamp.toDate()).toLocaleString()}`, 30, 300);
+
+                    // Garis Pembatas
+                    ctx.strokeStyle = "#ffcc00";
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(20, 320);
+                    ctx.lineTo(canvas.width - 20, 320);
+                    ctx.stroke();
+
+                    // Footer Struk
+                    ctx.textAlign = "center";
+                    ctx.fillStyle = "#ffcc00";
+                    ctx.fillText("Terima Kasih Telah Berbelanja!", canvas.width / 2, 360);
+
+                    // Tampilkan canvas dan tombol unduhan
+                    canvas.style.display = 'block';
+                    document.getElementById('downloadButton').style.display = 'inline-block';
+                } else {
+                    alert("Order ID tidak ditemukan.");
+                }
+            }).catch((error) => {
+                console.error("Error fetching order data: ", error);
+            });
+        }
+
+        function downloadReceipt() {
+            const canvas = document.getElementById('receiptCanvas');
+            const link = document.createElement('a');
+            link.download = 'struk_order_ahsanstore.png';
+            link.href = canvas.toDataURL('image/png', 1.0); // High definition
+            link.click();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Informasi Pesanan</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+        }
+
+        main {
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        img {
+            width: 50px;
+            height: auto;
+        }
+
+        select, button {
+            padding: 5px;
+            margin: 5px 0;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .delete-all {
+            margin-top: 20px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-storage.js"></script>
+</head>
+<body>
+    <main>
+        <h2>Informasi Pesanan</h2>
+        <div id="orderListContainer">
+            <table id="orderTable">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Tujuan Pengguna</th>
+                        <th>Produk</th>
+                        <th>Nama Game</th> <!-- Tambahkan kolom Nama Game -->
+                        <th>Bukti Pembayaran</th>
+                        <th>Metode Pembayaran</th>
+                        <th>Nomor Telepon</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="orderTableBody">
+                    <!-- Data pesanan akan dimuat di sini -->
+                </tbody>
+            </table>
+        </div>
+        <button class="delete-all" onclick="deleteAllOrders()">Hapus Semua Pesanan</button>
+    </main>
+    <script>
+        // Inisialisasi Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDHZ11E5Mq0NlqFuN09xzFJhMgfqMhU-Aw",
+            authDomain: "konter-e465d.firebaseapp.com",
+            projectId: "konter-e465d",
+            storageBucket: "konter-e465d.appspot.com",
+            messagingSenderId: "1033277565037",
+            appId: "1:1033277565037:web:8e4f9560b1e70a13c57764",
+            measurementId: "G-VYPRYTSB81"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // Fungsi untuk mengambil data pesanan dari Firestore
+        function fetchOrders() {
+            const orderTableBody = document.getElementById('orderTableBody');
+            db.collection('Orders').get().then((querySnapshot) => {
+                orderTableBody.innerHTML = ''; // Bersihkan baris yang ada
+                querySnapshot.forEach((doc) => {
+                    const orderData = doc.data();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${doc.id}</td>
+                        <td>${orderData.combinedId}</td>
+                        <td>${orderData.productName} - Rp${orderData.productPrice}</td>
+                        <td>${orderData.gameName}</td> <!-- Menampilkan nama game -->
+                        <td><img src="${orderData.paymentProof}" alt="Bukti Pembayaran"></td>
+                        <td>${orderData.paymentMethod}</td>
+                        <td>${orderData.phoneNumber}</td>
+                        <td>
+                            <select onchange="updateStatus('${doc.id}', this.value)">
+                                <option value="pending" ${orderData.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="confirmed" ${orderData.status === 'confirmed' ? 'selected' : ''}>Dikonfirmasi</option>
+                                <option value="rejected" ${orderData.status === 'rejected' ? 'selected' : ''}>Ditolak</option>
+                                <option value="completed" ${orderData.status === 'completed' ? 'selected' : ''}>Selesai</option>
+                                <option value="trouble" ${orderData.status === 'trouble' ? 'selected' : ''}>Gangguan</option>
+                            </select>
+                        </td>
+                        <td class="action-buttons">
+                            <button onclick="deleteOrder('${doc.id}', '${orderData.paymentProof}')">Hapus</button>
+                        </td>
+                    `;
+                    orderTableBody.appendChild(row);
+                });
+            }).catch((error) => {
+                console.error("Error fetching orders: ", error);
+                orderTableBody.innerHTML = `<tr><td colspan="9">Terjadi kesalahan saat mengambil data pesanan.</td></tr>`;
+            });
+        }
+
+        // Fungsi untuk menghapus semua pesanan
+        function deleteAllOrders() {
+            const confirmDelete = confirm("Apakah Anda yakin ingin menghapus semua pesanan?");
+            if (confirmDelete) {
+                db.collection('Orders').get().then((querySnapshot) => {
+                    const deletePromises = [];
+                    querySnapshot.forEach((doc) => {
+                        const orderData = doc.data();
+                        if (orderData.paymentProof && orderData.paymentProof.trim() !== '') {
+                            // Jika ada bukti pembayaran, hapus dari Storage
+                            const storageRef = storage.refFromURL(orderData.paymentProof);
+                            deletePromises.push(storageRef.delete().catch((error) => {
+                                console.error("Error deleting payment proof: ", error);
+                            }));
+                        }
+                        // Hapus dari Firestore
+                        deletePromises.push(db.collection('Orders').doc(doc.id).delete());
+                    });
+                    // Tunggu semua penghapusan selesai
+                    return Promise.all(deletePromises);
+                }).then(() => {
+                    alert("Semua pesanan berhasil dihapus.");
+                    location.reload(); // Refresh halaman setelah penghapusan
+                }).catch((error) => {
+                    console.error("Error deleting all orders: ", error);
+                    alert("Terjadi kesalahan saat menghapus semua pesanan: " + error.message);
+                });
+            }
+        }
+
+        // Fungsi untuk menghapus pesanan
+        function deleteOrder(orderId, paymentProofURL) {
+            const confirmDelete = confirm("Apakah Anda yakin ingin menghapus pesanan ini?");
+            if (confirmDelete) {
+                if (paymentProofURL && paymentProofURL.trim() !== '') {
+                    const storageRef = storage.refFromURL(paymentProofURL);
+                    storageRef.delete().then(() => {
+                        console.log("Bukti pembayaran berhasil dihapus dari Storage.");
+                        deleteOrderData(orderId);
+                    }).catch((error) => {
+                        console.error("Error deleting payment proof: ", error);
+                        alert("Terjadi kesalahan saat menghapus bukti pembayaran: " + error.message);
+                        deleteOrderData(orderId);
+                    });
+                } else {
+                    deleteOrderData(orderId);
+                }
+            } else {
+                console.log("Penghapusan pesanan dibatalkan.");
+            }
+        }
+
+        // Fungsi untuk menghapus data pesanan dari Firestore
+        function deleteOrderData(orderId) {
+            db.collection('Orders').doc(orderId).delete().then(() => {
+                alert("Pesanan berhasil dihapus.");
+                location.reload(); // Refresh halaman setelah penghapusan
+            }).catch((error) => {
+                console.error("Error deleting order: ", error);
+                alert("Terjadi kesalahan saat menghapus pesanan: " + error.message);
+            });
+        }
+
+        // Fungsi untuk mengubah status pesanan
+        function updateStatus(orderId, newStatus) {
+            db.collection('Orders').doc(orderId).update({
+                status: newStatus
+            }).then(() => {
+                alert("Status berhasil diubah.");
+            }).catch((error) => {
+                console.error("Error updating status: ", error);
+            });
+        }
+
+        // Menjalankan fungsi untuk mengambil data pesanan saat halaman dimuat
+        fetchOrders();
+    </script>
+</body>
+</html>
