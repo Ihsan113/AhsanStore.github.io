@@ -180,43 +180,77 @@
 }
 
 
+/* Mengatur kontainer harga asli dan persentase diskon menggunakan flexbox */
+.product .harga-wrapper {
+  display: flex;
+  align-items: center; /* Vertikal align agar teks rata tengah */
+  margin-bottom: 10px; /* Beri sedikit jarak dari harga diskon */
+}
+
 .product .harga-asli {
   text-decoration: line-through;
   color: #888888; /* Warna yang lebih gelap untuk elegansi */
-  margin-bottom: 13px;
   font-size: 13px;
+  margin-right: 10px; /* Jarak antara harga asli dan persen diskon */
 }
 
+/* Persentase diskon default tanpa glow */
+.product .persen-diskon {
+  color: #00e676;
+  font-size: 0.7em;
+  font-weight: bold;
+  padding: 6px 2px;
+  border-radius: 5px;
+  background-color: rgba(0, 230, 118, 0.1); /* Background hijau muda transparan */
+  border: 1px solid #00e676; /* Border hijau */
+  /* Efek glow dihapus dari default */
+}
+
+/* Efek glowing aktif hanya saat produk dipilih */
+.product.selected .persen-diskon {
+  animation: glow-green 1.5s infinite alternate; /* Animasi glow hijau */
+}
+
+/* Efek glowing untuk persen diskon berwarna hijau */
+@keyframes glow-green {
+  0% {
+    box-shadow: 0 0 5px #00e676; /* Cahaya hijau awal */
+  }
+  100% {
+    box-shadow: 0 0 20px #00e676; /* Cahaya hijau lebih intens */
+  }
+}
+
+
+/* Harga diskon dengan tampilan lebih elegan */
 .product .harga-diskon {
   color: #ffffff;
-  background-color: #42a5f5; /* Warna biru muda yang enak dilihat */
+  background-color: #42a5f5;
   padding: 5px 15px;
-  border-top-right-radius: 20px; /* Melengkung di sudut kanan atas */
-  border-bottom-left-radius: 20px; /* Melengkung di sudut kiri bawah */
+  border-top-right-radius: 20px;
+  border-bottom-left-radius: 20px;
   font-size: 14px;
   font-weight: 500;
   display: inline-block;
   position: relative;
   overflow: hidden;
   z-index: 1;
-  margin-bottom: -5px;
-  animation: flash-animation 1.5s infinite; /* Menambahkan animasi flash */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* Shadow untuk kedalaman */
+  animation: flash-animation 1.5s infinite;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  margin-top: 5px;
 }
 
-/* Animasi warna menyala */
 @keyframes flash-animation {
   0% {
-    background-color: #42a5f5; /* Warna biru muda awal */
+    background-color: #42a5f5;
   }
   50% {
-    background-color: #64b5f6; /* Warna biru yang lebih terang di tengah */
+    background-color: #64b5f6;
   }
   100% {
-    background-color: #42a5f5; /* Kembali ke warna biru muda */
+    background-color: #42a5f5;
   }
 }
-
 
 
 
@@ -537,6 +571,16 @@ button:hover {
             100% { transform: rotate(360deg); }
         }
 
+
+
+
+
+
+
+
+
+
+
   </style>
 </head>
 <body>
@@ -685,8 +729,8 @@ const firebaseConfig = {
   const app = firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  // Menampilkan produk Mobile Legends dari Firebase
-  const productContainer = document.getElementById('productContainer');
+// Menampilkan produk Mobile Legends dari Firebase
+const productContainer = document.getElementById('productContainer');
 let selectedProduct = null;
 
 db.collection('PUBG')
@@ -703,27 +747,37 @@ db.collection('PUBG')
     // Mengurutkan produk berdasarkan harga diskon (harus pastikan hargaDiskon adalah angka)
     products.sort((a, b) => parseInt(a.hargaDiskon.replace(/\D/g, '')) - parseInt(b.hargaDiskon.replace(/\D/g, '')));
 
-    // Menampilkan produk yang sudah diurutkan
-    products.forEach((data) => {
-      const productDiv = document.createElement('div');
-      productDiv.classList.add('product');
-      productDiv.innerHTML = `
-        <h3>${data.namaBarang}</h3>
-        <p class="harga-asli">Rp${data.hargaAsli}</p>
-        <p class="harga-diskon">Rp${data.hargaDiskon}</p>
-      `;
-      productDiv.addEventListener('click', () => {
-        // Deselect previous product
-        document.querySelectorAll('.product').forEach(p => p.classList.remove('selected'));
-        productDiv.classList.add('selected');
-        selectedProduct = data;
-      });
-      productContainer.appendChild(productDiv);
-    });
+   products.forEach((data) => {
+  const hargaAsli = parseInt(data.hargaAsli.replace(/\D/g, ''));
+  const hargaDiskon = parseInt(data.hargaDiskon.replace(/\D/g, ''));
+
+  // Menghitung persentase diskon
+  const persenDiskon = Math.round(((hargaAsli - hargaDiskon) / hargaAsli) * 100);
+
+  const productDiv = document.createElement('div');
+  productDiv.classList.add('product');
+  productDiv.innerHTML = `
+    <h3>${data.namaBarang}</h3>
+    <div class="harga-wrapper">
+      <p class="harga-asli">Rp${hargaAsli.toLocaleString('id-ID')}</p>
+      <label class="persen-diskon">(${persenDiskon}% OFF)</label>
+    </div>
+    <p class="harga-diskon">Rp${hargaDiskon.toLocaleString('id-ID')}</p>
+  `;
+  productDiv.addEventListener('click', () => {
+    // Deselect previous product
+    document.querySelectorAll('.product').forEach(p => p.classList.remove('selected'));
+    productDiv.classList.add('selected');
+    selectedProduct = data;
+  });
+  productContainer.appendChild(productDiv);
+});
+
   })
   .catch((error) => {
     console.error("Error mendapatkan produk: ", error);
   });
+
 
 
   // Logika pesanan
