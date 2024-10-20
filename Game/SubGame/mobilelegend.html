@@ -573,6 +573,53 @@ button:hover {
             100% { transform: rotate(360deg); }
         }
 
+
+.filter-options {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.filter-options label {
+  margin-right: 10px;
+  font-weight: bold;
+  color: #e4e4e4;
+}
+
+.select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.select-wrapper i {
+  position: absolute;
+  left: 10px;
+  color: #888; /* Warna ikon */
+}
+
+select {
+  padding: 8px 30px; /* Padding untuk memberi ruang pada ikon */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+  font-size: 12px;
+  appearance: none; /* Menghilangkan tampilan default dropdown */
+  background: #f9f9f9; /* Warna latar belakang */
+  color: #555; /* Warna teks */
+  cursor: pointer;
+  transition: border-color 0.3s ease; /* Transisi border */
+}
+
+select:hover {
+  border-color: #888; /* Warna border saat hover */
+}
+
+select:focus {
+  border-color: #007bff; /* Warna border saat fokus */
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Efek bayangan saat fokus */
+}
+
   </style>
 </head>
 <body>
@@ -624,9 +671,25 @@ button:hover {
 
   </div>
 
+
+
+
   <!-- Pilihan Produk -->
   <div class="form-card">
-    <h3>2. Pilih Produk</h3>
+        <h3>2. Pilih Produk</h3>
+      <!-- Filter Produk -->
+<div class="filter-options">
+  <label for="sortPrice">Kategori :</label>
+  <div class="select-wrapper">
+    <i class="fas fa-sort-amount-down-alt"></i> <!-- Ikon untuk dropdown -->
+    <select id="sortPrice">
+      <option value="termurah">Termurah</option>
+      <option value="termahal">Termahal</option>
+      <option value="WDP">WDP</option>
+    </select>
+  </div>
+</div>
+ 
     <div class="products-grid" id="productContainer">
       <!-- Produk akan diisi dari Firebase -->
     </div>
@@ -726,6 +789,8 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+
+
 // Menampilkan produk Mobile Legends dari Firebase
 const productContainer = document.getElementById('productContainer');
 let selectedProduct = null;
@@ -741,39 +806,78 @@ db.collection('MobileLegends')
       products.push(data);
     });
 
-    // Mengurutkan produk berdasarkan harga diskon (harus pastikan hargaDiskon adalah angka)
-    products.sort((a, b) => parseInt(a.hargaDiskon.replace(/\D/g, '')) - parseInt(b.hargaDiskon.replace(/\D/g, '')));
+    // Mengurutkan produk berdasarkan harga diskon (default termurah)
+    sortProducts(products, 'termurah');
 
-   products.forEach((data) => {
-  const hargaAsli = parseInt(data.hargaAsli.replace(/\D/g, ''));
-  const hargaDiskon = parseInt(data.hargaDiskon.replace(/\D/g, ''));
-
-  // Menghitung persentase diskon
-  const persenDiskon = Math.round(((hargaAsli - hargaDiskon) / hargaAsli) * 100);
-
-  const productDiv = document.createElement('div');
-  productDiv.classList.add('product');
-  productDiv.innerHTML = `
-    <h3>${data.namaBarang}</h3>
-    <div class="harga-wrapper">
-      <p class="harga-asli">Rp${hargaAsli.toLocaleString('id-ID')}</p>
-      <label class="persen-diskon">(${persenDiskon}% OFF)</label>
-    </div>
-    <p class="harga-diskon">Rp${hargaDiskon.toLocaleString('id-ID')}</p>
-  `;
-  productDiv.addEventListener('click', () => {
-    // Deselect previous product
-    document.querySelectorAll('.product').forEach(p => p.classList.remove('selected'));
-    productDiv.classList.add('selected');
-    selectedProduct = data;
-  });
-  productContainer.appendChild(productDiv);
-});
-
+    // Menangani filter berdasarkan pilihan pengguna
+    document.getElementById('sortPrice').addEventListener('change', (event) => {
+      const filterValue = event.target.value;
+      sortProducts(products, filterValue);
+    });
   })
   .catch((error) => {
     console.error("Error mendapatkan produk: ", error);
   });
+
+// Fungsi untuk mengurutkan dan menampilkan ulang produk
+function displayProducts(products) {
+  productContainer.innerHTML = ''; // Bersihkan produk sebelumnya
+
+  if (products.length === 0) {
+    productContainer.innerHTML = '<p>Tidak ada produk yang ditemukan.</p>'; // Tampilkan pesan jika tidak ada produk
+  } else {
+    products.forEach((data) => {
+      const hargaAsli = parseInt(data.hargaAsli.replace(/\D/g, ''));
+      const hargaDiskon = parseInt(data.hargaDiskon.replace(/\D/g, ''));
+
+      // Menghitung persentase diskon
+      const persenDiskon = Math.round(((hargaAsli - hargaDiskon) / hargaAsli) * 100);
+
+      const productDiv = document.createElement('div');
+      productDiv.classList.add('product');
+      productDiv.innerHTML = `
+        <h3>${data.namaBarang}</h3>
+        <div class="harga-wrapper">
+          <p class="harga-asli">Rp${hargaAsli.toLocaleString('id-ID')}</p>
+          <label class="persen-diskon">(${persenDiskon}% OFF)</label>
+        </div>
+        <p class="harga-diskon">Rp${hargaDiskon.toLocaleString('id-ID')}</p>
+      `;
+      productDiv.addEventListener('click', () => {
+        // Deselect previous product
+        document.querySelectorAll('.product').forEach(p => p.classList.remove('selected'));
+        productDiv.classList.add('selected');
+        selectedProduct = data;
+      });
+      productContainer.appendChild(productDiv);
+    });
+  }
+}
+
+// Fungsi untuk mengurutkan produk
+function sortProducts(products, criteria) {
+  let filteredProducts = [...products];
+
+  if (criteria === 'termurah') {
+    // Urutkan dari harga termurah
+    filteredProducts.sort((a, b) => 
+      parseInt(a.hargaDiskon.replace(/\D/g, '')) - parseInt(b.hargaDiskon.replace(/\D/g, ''))
+    );
+  } else if (criteria === 'termahal') {
+    // Urutkan dari harga termahal
+    filteredProducts.sort((a, b) => 
+      parseInt(b.hargaDiskon.replace(/\D/g, '')) - parseInt(a.hargaDiskon.replace(/\D/g, ''))
+    );
+  } else if (criteria === 'WDP') {
+    // Filter produk yang mengandung '1×' atau '2×'
+    filteredProducts = filteredProducts.filter(product => 
+      product.namaBarang.includes('1×') || product.namaBarang.includes('2×')
+    );
+  }
+
+  // Tampilkan produk yang sudah diurutkan atau difilter
+  displayProducts(filteredProducts);
+}
 
 
 
@@ -925,6 +1029,8 @@ document.getElementById('checkForm').addEventListener('submit', function(event) 
       document.getElementById('result').innerHTML = `<p>Terjadi kesalahan: ${error.message}</p>`;
     });
 });
+
+
 
 </script>
 
