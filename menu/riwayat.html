@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Riwayat Orderan Client</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
         body {
             font-family: 'Roboto', sans-serif;
             background-color: #1e1e1e;
             color: #fff;
-            margin: 0;
-            padding: 20px;
         }
 
         h1 {
@@ -25,74 +25,56 @@
             margin-bottom: 20px;
         }
 
-        input[type="text"] {
-            padding: 10px;
-            border-radius: 5px 0 0 5px;
-            border: 1px solid #ffcc00;
-            width: 300px;
-            background-color: #333;
-            color: #fff;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        input[type="text"]:focus {
-            border-color: #4CAF50;
-        }
-
-        button {
-            padding: 10px 15px;
-            border-radius: 0 5px 5px 0;
-            border: none;
-            background-color: #4CAF50;
-            color: #fff;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            outline: none;
-        }
-
-        button:hover {
-            background-color: #45a049;
-        }
-
-        .table-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            border-collapse: collapse;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ffcc00;
-        }
-
-        th {
-            background-color: #333;
-            color: #ffcc00;
-        }
-
-        td {
-            background-color: #2a2a2a;
-            color: #fff;
-        }
-
-        .no-orders {
+        .no-orders, .loading {
             color: #ffcc00;
             text-align: center;
             margin-top: 20px;
         }
 
-        .loading {
-            text-align: center;
-            color: #ffcc00;
+        .pagination-container {
+            display: flex;
+            justify-content: center;
             margin-top: 20px;
+        }
+
+        .spinner-border {
+            margin-top: 20px;
+        }
+
+        /* Status badge styles */
+        .status-pending {
+            background-color: #ffcc00; /* Yellow */
+            color: black;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .status-confirmed {
+            background-color: #007bff; /* Blue */
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .status-rejected {
+            background-color: #dc3545; /* Red */
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .status-completed {
+            background-color: #28a745; /* Green */
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .status-trouble {
+            background-color: #6f42c1; /* Purple */
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
         }
 
         @media (max-width: 600px) {
@@ -101,99 +83,232 @@
                 align-items: center;
             }
 
-            input[type="text"], button {
+            .form-control, .btn {
                 width: 90%;
                 margin: 5px 0;
             }
         }
+        
+        #statusDescription {
+    background-color: #333; /* Latar belakang gelap untuk kontras */
+    border-radius: 8px; /* Sudut membulat */
+    padding: 15px; /* Ruang dalam */
+    margin-top: 20px; /* Margin atas */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Bayangan halus */
+}
+
+.status-item {
+    margin: 5px 0; /* Ruang antar item */
+    display: flex; /* Menyusun item secara fleksibel */
+    align-items: center; /* Pusatkan secara vertikal */
+}
+
+.status-item span {
+    padding: 3px 8px; /* Ruang dalam pada label status */
+    border-radius: 5px; /* Sudut membulat pada label */
+    font-weight: bold; /* Tebalkan teks */
+    text-transform: capitalize; /* Mengubah teks menjadi huruf kapital */
+}
+
+.status-pending {
+    background-color: #ffc107; /* Kuning untuk status pending */
+    color: #000; /* Teks hitam */
+}
+
+.status-confirmed {
+    background-color: #007bff; /* Biru untuk status confirmed */
+}
+
+.status-rejected {
+    background-color: #dc3545; /* Merah untuk status rejected */
+    color: #fff; /* Teks putih */
+}
+
+.status-completed {
+    background-color: #28a745; /* Hijau untuk status completed */
+    color: #fff; /* Teks putih */
+}
+
+.status-trouble {
+    background-color: #6f42c1; /* Ungu untuk status trouble */
+    color: #fff; /* Teks putih */
+}
+
     </style>
 </head>
 <body>
     <h1>Riwayat Orderan Client</h1>
 
-    <div class="search-container">
-        <input type="text" id="phoneNumber" placeholder="Masukkan nomor telepon...">
-        <button onclick="searchOrders()">Cari</button>
-    </div>
+    <div class="table-responsive">
+    <table class="table table-dark table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Produk</th>
+                <th>Nama Game</th>
+                <th>Harga</th>
+                <th>Metode Pembayaran</th>
+                <th>Tanggal Pesanan</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="orderTableBody">
+            <tr>
+                <td colspan="6" class="text-center">Masukkan nomor telepon untuk melihat riwayat orderan.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 
-    <div class="table-container">
-        <table id="orderTable">
-            <thead>
-                <tr>
-                    <th>Produk</th>
-                    <th>Nama Game</th> <!-- Tambahan kolom Nama Game -->
-                    <th>Harga</th>
-                    <th>Metode Pembayaran</th>
-                    <th>Tanggal Pesanan</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="orderTableBody">
-                <tr class="loading">
-                    <td colspan="6">Masukkan nomor telepon untuk melihat riwayat orderan.</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+<div id="pagination" class="pagination-container"></div>
 
+<div id="statusDescription" class="text-light text-center mt-3">
+    <p><strong>Keterangan Status:</strong></p>
+    <div class="status-item">
+        <span class="status-pending">Pending</span> - Menunggu konfirmasi
+    </div>
+    <div class="status-item">
+        <span class="status-confirmed">Confirmed</span> - Dikonfirmasi
+    </div>
+    <div class="status-item">
+        <span class="status-rejected">Rejected</span> - Ditolak
+    </div>
+    <div class="status-item">
+        <span class="status-completed">Completed</span> - Selesai
+    </div>
+    <div class="status-item">
+        <span class="status-trouble">Trouble</span> - Masalah dalam transaksi
+    </div>
+</div>
+
+
+
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
-    <script>
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyA9qR6fQwVhhvOOZobTnhkmanwnyM_eN6A",
-  authDomain: "ahsanstore-afd75.firebaseapp.com",
-  projectId: "ahsanstore-afd75",
-  storageBucket: "ahsanstore-afd75.appspot.com",
-  messagingSenderId: "628733570435",
-  appId: "1:628733570435:web:054af025d091f89490dab6",
-  measurementId: "G-N35XLD1BMK"
-};
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA9qR6fQwVhhvOOZobTnhkmanwnyM_eN6A",
+            authDomain: "ahsanstore-afd75.firebaseapp.com",
+            projectId: "ahsanstore-afd75",
+            storageBucket: "ahsanstore-afd75.appspot.com",
+            messagingSenderId: "628733570435",
+            appId: "1:628733570435:web:054af025d091f89490dab6",
+            measurementId: "G-N35XLD1BMK"
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        let currentPage = 1;
+        const itemsPerPage = 5;
+        let allOrders = [];
+
+        // Function to get status class
+        function getStatusClass(status) {
+            switch (status) {
+                case 'pending': return 'status-pending';
+                case 'confirmed': return 'status-confirmed';
+                case 'rejected': return 'status-rejected';
+                case 'completed': return 'status-completed';
+                case 'trouble': return 'status-trouble';
+                default: return '';
+            }
+        }
+
+        // Search orders by phone number
         function searchOrders() {
             const phoneNumber = document.getElementById('phoneNumber').value.trim();
             const orderTableBody = document.getElementById('orderTableBody');
+            const pagination = document.getElementById('pagination');
 
-            if (phoneNumber === "") {
+            if (!phoneNumber) {
                 alert("Masukkan nomor telepon.");
                 return;
             }
 
-            orderTableBody.innerHTML = `<tr class="loading"><td colspan="6">Memuat riwayat orderan...</td></tr>`;
+            orderTableBody.innerHTML = `<tr><td colspan="6" class="text-center"><div class="spinner-border text-warning" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>`;
+            pagination.innerHTML = '';
 
-            db.collection('Orders')
-                .where('phoneNumber', '==', phoneNumber)
-                .get()
+            db.collection('Orders').where('phoneNumber', '==', phoneNumber).get()
                 .then((querySnapshot) => {
-                    orderTableBody.innerHTML = ''; 
+                    orderTableBody.innerHTML = '';
+                    allOrders = [];
 
-                    if (querySnapshot.empty) {
-                        orderTableBody.innerHTML = `<tr class="no-orders"><td colspan="6">Tidak ada orderan dengan nomor telepon ini.</td></tr>`;
+                    querySnapshot.forEach((doc) => {
+                        allOrders.push(doc.data());
+                    });
+
+                    if (allOrders.length === 0) {
+                        orderTableBody.innerHTML = `<tr><td colspan="6" class="no-orders">Tidak ada orderan dengan nomor telepon ini.</td></tr>`;
                     } else {
-                        querySnapshot.forEach((doc) => {
-                            const orderData = doc.data();
-                            const orderRow = `
-                                <tr>
-                                    <td>${orderData.productName}</td>
-                                    <td>${orderData.gameName || 'N/A'}</td> <!-- Menampilkan Nama Game -->
-                                    <td>Rp${orderData.productPrice}</td>
-                                    <td>${orderData.paymentMethod}</td>
-                                    <td>${new Date(orderData.timestamp.toDate()).toLocaleString()}</td>
-                                    <td>${orderData.status}</td>
-                                </tr>
-                            `;
-                            orderTableBody.innerHTML += orderRow;
-                        });
+                        renderTablePage(currentPage);
+                        renderPagination();
                     }
                 })
                 .catch((error) => {
                     console.error("Error fetching orders: ", error);
-                    orderTableBody.innerHTML = `<tr class="no-orders"><td colspan="6">Terjadi kesalahan saat mengambil riwayat orderan.</td></tr>`;
+                    orderTableBody.innerHTML = `<tr><td colspan="6" class="text-danger">Terjadi kesalahan saat mengambil riwayat orderan.</td></tr>`;
                 });
         }
+
+        // Render table page with orders
+        function renderTablePage(page) {
+            const start = (page - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const ordersToShow = allOrders.slice(start, end);
+
+            const orderTableBody = document.getElementById('orderTableBody');
+            orderTableBody.innerHTML = '';
+
+            ordersToShow.forEach((order) => {
+                const orderRow = `
+                    <tr>
+                        <td>${order.productName}</td>
+                        <td>${order.gameName || 'N/A'}</td>
+                        <td>Rp${order.productPrice}</td>
+                        <td>${order.paymentMethod}</td>
+                        <td>${new Date(order.timestamp.toDate()).toLocaleString()}</td>
+                        <td><span class="${getStatusClass(order.status)}">${order.status}</span></td>
+                    </tr>
+                `;
+                orderTableBody.innerHTML += orderRow;
+            });
+        }
+
+        // Render pagination
+        function renderPagination() {
+            const totalPages = Math.ceil(allOrders.length / itemsPerPage);
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.className = `btn ${i === currentPage ? 'btn-warning' : 'btn-secondary'} me-1`;
+                pageButton.innerText = i;
+                pageButton.onclick = () => {
+                    currentPage = i;
+                    renderTablePage(currentPage);
+                    renderPagination();
+                };
+                pagination.appendChild(pageButton);
+            }
+        }
+
+        // Load all orders on page load
+        window.onload = () => {
+            db.collection('Orders').get()
+                .then((querySnapshot) => {
+                    querySnapshot.forEach((doc) => {
+                        allOrders.push(doc.data());
+                    });
+                    renderTablePage(currentPage);
+                    renderPagination();
+                })
+                .catch((error) => {
+                    console.error("Error fetching orders: ", error);
+                });
+        };
     </script>
 </body>
 </html>

@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <meta charset="UTF-8">
@@ -178,10 +181,17 @@
 
         <hr>
 <center>
-       <div class="qr-code-container">
-    <img id="qrCode" src="QR.jpg" alt="QR Code for Payment" style="width: 200px; height: 200px;" />
-</div>
+    <div class="qr-code-container">
+        <img id="qrCode" src="QR.jpg" alt="QR Code for Payment" style="width: 200px; height: 200px; cursor: pointer;" />
+    </div>
 </center>
+
+
+
+    
+
+
+
 
         <button id="confirmPaymentBtn" class="confirm-button">Konfirmasi Pembayaran</button>
 
@@ -329,40 +339,41 @@ sendProofBtn.addEventListener('click', () => {
                 const orderData = doc.data();
                 const emailParams = {                    
                     order_id: orderId,
-                    combined_id: orderData.combinedId, // Menambahkan combinedId
+                    combined_id: orderData.combinedId,
                     product: `${orderData.productName} - Rp${orderData.productPrice}`,
                     payment_method: orderData.paymentMethod,
                     phone_number: orderData.phoneNumber,
                     game_name: orderData.gameName,
                     order_date: new Date(orderData.timestamp.toDate()).toLocaleString(),
-                    payment_proof_url: downloadURL // Include the URL in the email params
+                    payment_proof_url: downloadURL
                 };
 
-                // Kirim email melalui EmailJS
+                // Send email via EmailJS
                 emailjs.send("service_q3ylw0d", "template_xr8sxkt", emailParams)
                     .then(() => {
                         // Update the success message
                         message.innerText = "Bukti pembayaran dan informasi pesanan berhasil dikirim.";
                         message.style.display = 'block';
 
-                        // Update Firebase dengan bukti pembayaran URL dan combinedId
+                        // Update Firebase with payment proof URL and combinedId
                         db.collection('Orders').doc(orderId).update({
-                            paymentProof: downloadURL, // Simpan URL download
+                            paymentProof: downloadURL,
                             paymentConfirmed: true,
-                            combinedId: orderData.combinedId // Menyimpan combinedId juga
+                            combinedId: orderData.combinedId
                         }).then(() => {
                             console.log("Informasi pesanan diperbarui dengan bukti pembayaran.");
                         }).catch((error) => {
                             console.error("Error updating order with payment proof: ", error);
                         });
 
-                        // Tampilkan modal konfirmasi
+                        // Show confirmation modal
                         showConfirmationModal();
 
-                        // Tunggu 2 detik sebelum mengalihkan ke halaman index
-                        setTimeout(() => {
-                            window.location.href = 'https://ahsan-store-github-io.vercel.app/'; // Redirect to index.html
-                        }, 2000); // Wait 2 seconds before redirecting
+                       // Menunggu 2 detik sebelum mengalihkan ke halaman struk dengan orderId
+setTimeout(() => {
+    window.location.href = `receipt.html?orderId=${orderId}`; // Mengalihkan ke receipt.html dengan parameter orderId
+}, 2000);
+
 
                     }, (error) => {
                         console.error("Error sending email via EmailJS: ", error);
@@ -398,9 +409,9 @@ function showConfirmationModal() {
     // Show the modal with fade-in animation
     confirmationModal.classList.add('fade-in');
 
-    // Close modal and redirect to index.html when OK is clicked
+    // Close modal and redirect to receipt page when OK is clicked
     document.getElementById('okButton').addEventListener('click', () => {
-        window.location.href = 'https://ahsan-store-github-io.vercel.app/';
+        window.location.href = 'receipt.html?orderId=${orderId}'; // Redirect to receipt.html
     });
 
     // Close modal if clicked outside of modal content
@@ -411,13 +422,42 @@ function showConfirmationModal() {
     });
 }
 
-
 // Event listener untuk refresh halaman
 document.getElementById('closeModal').addEventListener('click', function() {
     location.reload(); // Refresh halaman
 });
 
 
+
+ const qrContainer = document.querySelector('.qr-code-container');
+
+    // Event listener untuk mengklik gambar QR Code
+    qrContainer.addEventListener('click', function() {
+        Swal.fire({
+            title: 'QR Code',
+            html: `
+                <img src="${document.getElementById('qrCode').src}" alt="QR Code" style="width: 300px; height: 300px;" />
+                <br />
+                <button id="downloadBtn" style="margin-top: 10px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Download QR Code</button>
+            `,
+            showCloseButton: true,
+            focusConfirm: false,
+            didOpen: () => {
+                // Tambahkan event listener untuk tombol download
+                const downloadBtn = Swal.getHtmlContainer().querySelector('#downloadBtn');
+                downloadBtn.addEventListener('click', function() {
+                    const link = document.createElement('a');
+                    link.href = document.getElementById('qrCode').src;
+                    link.download = 'QR_Code.png'; // Nama file yang akan diunduh
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+            }
+        });
+    });
+
     </script>
 </body>
 </html>
+
