@@ -70,19 +70,22 @@
         <h2>Informasi Pesanan</h2>
         <div class="table-responsive">
             <table class="table table-bordered table-hover">
-                <thead>
-                    <tr>
-                        <th>Order ID</th>
-                        <th>Tujuan Pengguna</th>
-                        <th>Produk</th>
-                        <th>Nama Game</th>
-                        <th>Bukti Pembayaran</th>
-                        <th>Metode Pembayaran</th>
-                        <th>Nomor Telepon</th>
-                        <th>Status</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
+               <thead>
+    <tr>
+        <th>Order ID</th>
+        <th>Tanggal & Waktu</th>
+        <th>Tujuan Pengguna</th>
+        <th>Produk</th>
+        <th>Nama Game</th>
+        <th>Bukti Pembayaran</th>
+        <th>Metode Pembayaran</th>
+        <th>Nomor Telepon</th>
+        <th>Status</th>
+        <th>Aksi</th>
+    </tr>
+</thead>
+
+
                 <tbody id="orderTableBody">
                     <!-- Data pesanan akan dimuat di sini -->
                 </tbody>
@@ -108,40 +111,59 @@
     const storage = firebase.storage();
 
     function fetchOrders() {
-        const orderTableBody = document.getElementById('orderTableBody');
-        db.collection('Orders').get().then((querySnapshot) => {
-            orderTableBody.innerHTML = ''; 
-            querySnapshot.forEach((doc) => {
-                const orderData = doc.data();
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${doc.id}</td>
-                    <td>${orderData.combinedId}</td>
-                    <td>${orderData.productName} - Rp${orderData.productPrice}</td>
-                    <td>${orderData.gameName}</td>
-                    <td>${orderData.paymentProof ? `<img src="${orderData.paymentProof}" alt="Bukti Pembayaran">` : 'Belum ada bukti pembayaran'}</td>
-                    <td>${orderData.paymentMethod}</td>
-                    <td>${orderData.phoneNumber}</td>
-                    <td>
-                        <select class="form-select" onchange="updateStatus('${doc.id}', this.value)">
-                            <option value="pending" ${orderData.status === 'pending' ? 'selected' : ''}>Pending</option>
-                            <option value="confirmed" ${orderData.status === 'confirmed' ? 'selected' : ''}>Dikonfirmasi</option>
-                            <option value="rejected" ${orderData.status === 'rejected' ? 'selected' : ''}>Ditolak</option>
-                            <option value="completed" ${orderData.status === 'completed' ? 'selected' : ''}>Selesai</option>
-                            <option value="trouble" ${orderData.status === 'trouble' ? 'selected' : ''}>Gangguan</option>
-                        </select>
-                    </td>
-                    <td class="action-buttons">
-                        <button class="btn btn-danger btn-sm" onclick="deleteOrder('${doc.id}', '${orderData.paymentProof || ''}')">Hapus</button>
-                    </td>
-                `;
-                orderTableBody.appendChild(row);
-            });
-        }).catch((error) => {
-            console.error("Error fetching orders: ", error);
-            orderTableBody.innerHTML = `<tr><td colspan="9">Terjadi kesalahan saat mengambil data pesanan.</td></tr>`;
+    const orderTableBody = document.getElementById('orderTableBody');
+    const now = new Date();
+    db.collection('Orders').get().then((querySnapshot) => {
+        orderTableBody.innerHTML = ''; 
+        querySnapshot.forEach((doc) => {
+            const orderData = doc.data();
+            const orderTimestamp = orderData.timestamp ? orderData.timestamp.toDate() : null;
+
+            // Format the timestamp to display in the desired format
+            const formattedDate = orderTimestamp 
+                ? orderTimestamp.toLocaleDateString('id-ID', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                  }) + ' pukul ' + orderTimestamp.toLocaleTimeString('id-ID', {
+                    hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Jakarta'
+                  })
+                : "N/A";
+
+            // Check if the order is new (within the last hour)
+            const isNewOrder = orderTimestamp && ((now - orderTimestamp) < 60 * 60 * 1000); // within 1 hour
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${doc.id}</td>
+                <td>${formattedDate} ${isNewOrder ? '<span class="badge bg-success">Baru</span>' : ''}</td>
+                <td>${orderData.combinedId}</td>
+                <td>${orderData.productName} - Rp${orderData.productPrice}</td>
+                <td>${orderData.gameName}</td>
+                <td>${orderData.paymentProof ? `<img src="${orderData.paymentProof}" alt="Bukti Pembayaran">` : 'Belum ada bukti pembayaran'}</td>
+                <td>${orderData.paymentMethod}</td>
+                <td>${orderData.phoneNumber}</td>
+                <td>
+                    <select class="form-select" onchange="updateStatus('${doc.id}', this.value)">
+                        <option value="pending" ${orderData.status === 'pending' ? 'selected' : ''}>Pending</option>
+                        <option value="confirmed" ${orderData.status === 'confirmed' ? 'selected' : ''}>Dikonfirmasi</option>
+                        <option value="rejected" ${orderData.status === 'rejected' ? 'selected' : ''}>Ditolak</option>
+                        <option value="completed" ${orderData.status === 'completed' ? 'selected' : ''}>Selesai</option>
+                        <option value="trouble" ${orderData.status === 'trouble' ? 'selected' : ''}>Gangguan</option>
+                    </select>
+                </td>
+                <td class="action-buttons">
+                    <button class="btn btn-danger btn-sm" onclick="deleteOrder('${doc.id}', '${orderData.paymentProof || ''}')">Hapus</button>
+                </td>
+            `;
+            orderTableBody.appendChild(row);
         });
-    }
+    }).catch((error) => {
+        console.error("Error fetching orders: ", error);
+        orderTableBody.innerHTML = `<tr><td colspan="11">Terjadi kesalahan saat mengambil data pesanan.</td></tr>`;
+    });
+}
+
+fetchOrders();
+
 
     function deleteOrder(orderId, paymentProofUrl) {
         Swal.fire({
