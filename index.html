@@ -680,25 +680,28 @@ a:hover {
                     const storeStatus = doc.data().status;
 
                     // Menampilkan pesan menggunakan SweetAlert2
-                    if (storeStatus === 'open') {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Toko sedang buka!',
-                            text: 'Silakan nikmati belanja Anda.',
-                            confirmButtonText: 'OK'
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Toko sedang tutup!',
-                            text: 'Anda akan diarahkan ke halaman 404.',
-                            confirmButtonText: 'OK'
-                        }).then(() => {
-                            setTimeout(() => {
-                                window.location.href = "404/404.html"; // Ganti dengan URL halaman 404 Anda
-                            }, 500); // 0.5 detik sebelum diarahkan
-                        });
-                    }
+if (storeStatus === 'open') {
+    Swal.fire({
+        icon: 'success',
+        title: 'Toko sedang buka!',
+        text: 'Silakan nikmati belanja Anda.',
+        confirmButtonText: 'OK',
+        allowOutsideClick: false // Mencegah menutup saat klik di luar
+    });
+} else {
+    Swal.fire({
+        icon: 'error',
+        title: 'Toko sedang tutup!',
+        text: 'Anda akan diarahkan ke halaman 404.',
+        confirmButtonText: 'OK',
+        allowOutsideClick: false // Mencegah menutup saat klik di luar
+    }).then(() => {
+        setTimeout(() => {
+            window.location.href = "404/404.html"; // Ganti dengan URL halaman 404 Anda
+        }, 500); // 0.5 detik sebelum diarahkan
+    });
+}
+
                 } else {
                     console.log("No such document!");
                 }
